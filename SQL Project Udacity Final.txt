@@ -1,0 +1,145 @@
+
+
+SQL Project Udacity Questions and Solution 
+Question Set 1 – Question 1
+1] Which Country/Countries have the most invoices?
+SELECT BillingCountry, Count(*) AS Invoices
+FROM Invoice
+ORDER BY 2 DESC;
+
+2]Which City has the best customers?
+SELECT BillingCity AS 'BillingCity', SUM(Total) AS 'InvoiceDollars'
+FROM Invoice
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 1;
+
+3]Who is the best customer?
+SELECT Customer.FirstName, Customer.LastName,Customer.CustomerId, SUM(Total)total_spending
+FROM Invoice
+JOIN Customer ON Customer.CustomerId = Invoice.CustomerId
+GROUP BY 1,2
+ORDER BY 4 DESC
+LIMIT 1;
+
+
+Question Set 2 – Question 1
+SQL Code:
+SELECT DISTINCT Customer.Email,Customer.FirstName,Customer.LastName,Genre.Name
+FROM Customer
+JOIN Invoice ON Customer.CustomerId = Invoice.InvoiceId
+JOIN InvoiceLine ON InvoiceLine.InvoiceId = Invoice.InvoiceId
+JOIN Track ON Track.TrackID = InvoiceLine.TrackId 
+JOIN Genre ON Genre.GenreId = Track.GenreId
+WHERE Genre.Name = 'Rock'
+ORDER BY 1;
+
+Question Set 2 – Question 2
+SQL Code:
+SELECT Artist.ArtistId AS 'ArtistID', Artist.Name AS 'NAME', COUNT (Track.TrackId) AS 'Songs'
+FROM Artist
+JOIN Album ON Artist.ArtistId = Album.ArtistId
+JOIN Track ON Album.AlbumId = Track.AlbumId 
+JOIN Genre ON Track.GenreId = Genre.GenreId
+WHERE Genre.Name = 'Rock'
+GROUP BY 1,2
+ORDER BY 3 DESC
+LIMIT 10;
+
+Question Set 2 – Question 3 [Part 1]/T1
+Which artist has earned the most according to the InvoiceLine?
+SELECT Artist.Name AS Name,SUM(InvoiceLine.Quantity * InvoiceLine.UnitPrice) AS AmountSpent
+FROM Artist
+JOIN Album 
+ON Artist.ArtistId = Album.ArtistId 
+JOIN Track  
+ON Track.AlbumId = Album.AlbumId
+JOIN InvoiceLine 
+ON track.TrackId = InvoiceLine.TrackId
+JOIN Customer 
+ON customer.customerId = invoice.CustomerId
+JOIN Invoice
+ON Invoice.InvoiceId = InvoiceLine.InvoiceId
+GROUP BY 1
+ORDER BY 2 DESC;
+
+Question Set 2 –Question 3 [Part 2]/T2
+How much of each product was purchased by? [Each customer for Iron Maiden]
+SELECT Artist.Name AS Name,SUM(InvoiceLine.Quantity*InvoiceLine.UnitPrice) AS AmountSpent,
+Customer.CustomerId AS CustomerID, Customer.FirstName AS FirstName,Customer.LastName AS LastName
+FROM Artist
+JOIN Album 
+ON Artist.ArtistId = Album.ArtistId 
+JOIN Track  
+ON Track.AlbumId = Album.AlbumId
+JOIN InvoiceLine 
+ON track.TrackId = InvoiceLine.TrackId
+JOIN Customer 
+ON customer.customerId = invoice.CustomerId
+JOIN Invoice
+ON Invoice.InvoiceId = InvoiceLine.InvoiceId
+WHERE Artist.Name = 'Iron Maiden'
+GROUP BY 3,4,5
+ORDER BY 2 DESC;
+
+Advanced SQL : Question Set 3
+Question 1 – We want to find out the most popular music Genre for each country. We determine the most popular genre with the highest amount of purchases. Write a query that returns each country along with the top Genre. For Countries where the maximum number of purchases is shared return all Genres.
+
+WITH 
+T1 AS
+(SELECT
+Invoice.BillingCountry,
+COUNT(InvoiceLine.InvoiceId) AS Purchases,Genre.Name,Genre.GenreId
+FROM Invoice 
+JOIN InvoiceLine
+ ON Invoice.InvoiceId = InvoiceLine.InvoiceId
+JOIN Track 
+ON Track.TrackId = InvoiceLine.TrackId
+JOIN Genre
+ON Genre.GenreId = Track.GenreId
+GROUP BY 1,3,4),
+T2 AS
+(SELECT
+T1.BillingCountry,MAX(T1.Purchases) AS Purchases
+FROM T1
+GROUP BY 1)
+
+SELECT
+T1.Purchases,T1.BillingCountry AS Country,T1.Name,T1.GenreId
+FROM T1
+JOIN T2
+ ON T1.BillingCountry = T2.BillingCountry 
+AND T1.Purchases = T2.Purchases;
+
+Question 2 
+Return all the track names that have a song length longer than the average song length. Though you could perform this with two queries. Imagine you wanted your query to update based on when new data is put in the database. Therefore, you do not want to hard code the average into your query. You only need the Track table to complete this query.
+Return the Name and Milliseconds for each track. Order by song length with the longest songs listed first.
+There should only be 494 of the 3503 track in your table.
+SELECT Name, Milliseconds
+FROM Track 
+WHERE Milliseconds>(SELECT AVG (Milliseconds) FROM TRACK)
+ORDER BY 2 DESC; 
+
+Question 3 Write a query that determines the customer that has spent the most on music for each country. Write a query that returns the country along with the top customer and how much they spent. For countries where the top amount spent is shared, provide all customers who spent this amount.
+Use only the Customer and Invoice table.
+Columns : Country, TotalSpent, FirstName, LastName,CustomerId.
+Should return 25 rows. UK has two listing. Order By Country.
+WITH
+ T1 
+ AS(SELECT Customer.Country,SUM(Invoice.Total) AS TotalSpent,Customer.FirstName, Customer.LastName,Customer.CustomerId
+FROM Customer 
+JOIN Invoice 
+ON Customer.CustomerId = Invoice.CustomerId
+GROUP by 1,5),
+T2 
+AS(SELECT T1.Country,MAX(TotalSpent)AS TopTotal,T1.FirstName,T1.LastName,T1.CustomerId
+FROM T1
+GROUP BY 1) 
+
+SELECT T1.*
+FROM T1
+JOIN T2
+ON T1.Country = T2.Country
+WHERE T1.TotalSpent = T2.TopTotal
+ORDER by 1;
+
