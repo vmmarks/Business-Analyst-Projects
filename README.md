@@ -1,2 +1,2 @@
-# Business-Analyst-Projects
+# vmmarks.Business-Analyst-Projects
 First BA projects
